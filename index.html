@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Work Planner</title>
+<meta name="theme-color" content="#1F2A44">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#EAEFF3;--surface:#FFFFFF;--ink:#1F2A44;--muted:#5E6B82;--line:#D5DDE5;
+  --teal:#2F7F7A;--teal-soft:#DCEDEB;--marigold:#F2B632;--red:#C8453B;--red-soft:#F7E1DE;
+  --shadow:0 10px 30px rgba(31,42,68,.18);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121826;--surface:#1C2436;--ink:#E7ECF4;--muted:#9AA6BC;--line:#2C3650;
+  --teal:#5DB8B0;--teal-soft:#1F3A3A;--red:#E8766B;--red-soft:#3A2224;--shadow:0 10px 30px rgba(0,0,0,.5);}}
+:root[data-theme="dark"]{
+  --bg:#121826;--surface:#1C2436;--ink:#E7ECF4;--muted:#9AA6BC;--line:#2C3650;
+  --teal:#5DB8B0;--teal-soft:#1F3A3A;--red:#E8766B;--red-soft:#3A2224;--shadow:0 10px 30px rgba(0,0,0,.5);}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:600px;margin:0 auto;padding:18px 16px 120px}
+h1,h2,h3,.big{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif}
+button{font-family:inherit}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.today{margin:0;font-size:15px;color:var(--muted)}
+h1{margin:0;font-size:32px;line-height:1.1;letter-spacing:-.01em}
+.sync{font-size:12px;color:var(--muted);text-align:right}
+.pill{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:500;cursor:pointer}
+
+/* Daily contacts */
+.must{margin-top:18px;background:var(--ink);color:var(--bg);border-radius:22px;padding:16px}
+.must h2{margin:0;font-size:19px}
+.mustTop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.streak{display:flex;gap:5px}
+.streak span{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.35)}
+:root[data-theme="dark"] .streak span{border-color:rgba(0,0,0,.35)}
+.streak span.half{background:linear-gradient(90deg,var(--marigold) 50%,transparent 50%);border-color:var(--marigold)}
+.streak span.full{background:var(--marigold);border-color:var(--marigold)}
+.mc{margin-top:12px;background:var(--surface);color:var(--ink);border-radius:16px;padding:12px}
+.mc.ok{outline:3px solid var(--marigold)}
+.mcHead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mcHead strong{flex:1}
+.tick{width:34px;height:34px;border-radius:50%;border:2px solid var(--muted);background:transparent;color:#fff;font-size:18px;cursor:pointer;display:grid;place-items:center}
+.mc.ok .tick{background:var(--teal);border-color:var(--teal)}
+.mcFields{display:grid;grid-template-columns:1.3fr 1fr auto;gap:8px;align-items:center}
+.call{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--teal);color:#fff;text-decoration:none;border-radius:12px;padding:11px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.call[aria-disabled="true"]{background:var(--line);color:var(--muted);pointer-events:none}
+
+/* Tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:14px 0 10px}
+.tabs button{border:none;background:var(--surface);color:var(--muted);padding:11px;border-radius:12px;font-weight:600;font-size:15px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.panel[hidden]{display:none}
+
+/* Chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip b{font-weight:600;color:var(--muted);font-size:12px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] b{color:var(--bg)}
+
+.cat{margin-top:18px}
+.catHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.catHead h3{margin:0;font-size:18px;flex:1;display:flex;align-items:center;gap:8px}
+.catHead h3 i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.catHead small{color:var(--muted);font:500 13px Figtree,sans-serif}
+.addIn{border:none;background:transparent;color:var(--teal);font-weight:600;font-size:14px;cursor:pointer;padding:6px}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.job{background:var(--surface);border-radius:14px;padding:10px 10px 10px 4px;display:flex;gap:8px;align-items:flex-start;border-left:5px solid var(--c,var(--teal))}
+.job.dragging{box-shadow:var(--shadow);opacity:.95;position:relative;z-index:3}
+.job.done{opacity:.55}
+.job.done .jt{text-decoration:line-through}
+.job.overdue .jm{color:var(--red);font-weight:600}
+.handle{flex:none;width:30px;align-self:stretch;display:grid;place-items:center;color:var(--muted);cursor:grab;touch-action:none;font-size:20px;letter-spacing:-3px;user-select:none;-webkit-user-select:none}
+.chk{flex:none;width:26px;height:26px;margin-top:2px;border-radius:50%;border:2px solid var(--muted);background:transparent;color:#fff;cursor:pointer;display:grid;place-items:center;font-size:14px}
+.job.done .chk{background:var(--teal);border-color:var(--teal)}
+.jb{flex:1;min-width:0}
+.jt{margin:0;font-weight:600;word-wrap:break-word}
+.jm{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.jn{margin:3px 0 0;font-size:14px;color:var(--muted);white-space:pre-wrap}
+.jc{margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
+.jc a{color:var(--teal);font-weight:600;text-decoration:none}
+.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--muted)}
+.ja{display:flex;flex-direction:column;gap:4px}
+.mini{border:none;background:var(--teal-soft);color:var(--ink);font-size:13px;font-weight:500;border-radius:9px;padding:6px 10px;cursor:pointer}
+.mini.del{background:transparent;color:var(--red)}
+.empty{background:var(--surface);border-radius:14px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
+
+/* Calendar */
+.calHead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.calHead h2{margin:0;font-size:20px}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-size:12px;color:var(--muted);padding-bottom:2px}
+.day{aspect-ratio:1/1.05;border:none;background:var(--surface);border-radius:10px;color:var(--ink);font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;gap:3px}
+.day.other{opacity:.35}
+.day.isToday{outline:2px solid var(--marigold)}
+.day[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:90%}
+.dots i{width:6px;height:6px;border-radius:50%}
+.dayList{margin-top:16px}
+.dayList h3{margin:0 0 8px;font-size:18px}
+.gcal{font-size:13px;color:var(--teal);font-weight:600;text-decoration:none}
+
+/* Contacts */
+.cBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cBtns button,.cBtns label.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px;font-weight:600;font-size:14px;cursor:pointer;text-align:center;margin:0}
+.help{font-size:13px;color:var(--muted);margin:8px 0 14px}
+.crow{background:var(--surface);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.crow div{flex:1;min-width:0}
+.crow p{margin:0}
+.crow .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow .p{font-size:13px;color:var(--muted)}
+
+/* Forms */
+label.f{display:block;font-size:14px;font-weight:600;margin:12px 0 6px}
+input,select,textarea{width:100%;font:400 16px Figtree,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px}
+.mc input{background:var(--bg)}
+textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acWrap{position:relative}
+.acList{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);z-index:30;max-height:240px;overflow:auto;display:none}
+.acList button{display:block;width:100%;text-align:left;border:none;background:transparent;color:var(--ink);padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--line)}
+.acList button:last-child{border-bottom:none}
+.acList button small{display:block;color:var(--muted);font-size:12px}
+.acList button:hover,.acList button:focus{background:var(--teal-soft)}
+
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--marigold);color:#1F2A44;border:none;border-radius:999px;padding:15px 26px;font-weight:600;font-size:17px;box-shadow:var(--shadow);cursor:pointer;z-index:6}
+.scrim{position:fixed;inset:0;background:rgba(10,15,25,.45);display:none;z-index:10}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--surface);border-radius:22px 22px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));max-width:600px;margin:0 auto;transform:translateY(110%);transition:transform .25s ease;max-height:92%;overflow:auto}
+.sheet.open{transform:none}
+.sheet h2{margin:0 0 6px;font-size:21px}
+.save{margin-top:16px;width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:14px;padding:14px;font-weight:600;font-size:16px;cursor:pointer}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.quick button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+.alert{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;background:var(--marigold);color:#1F2A44;border-radius:18px;padding:16px;box-shadow:var(--shadow);display:none;max-width:560px;margin:0 auto}
+.alert p{margin:0}
+.alert .at{font-family:"Bricolage Grotesque",sans-serif;font-size:20px;font-weight:700}
+.alert .btns{display:flex;gap:8px;margin-top:12px}
+.alert button{flex:1;border:none;border-radius:12px;padding:11px;font-weight:600;font-size:15px;cursor:pointer;background:#1F2A44;color:#fff}
+.alert button.alt{background:rgba(31,42,68,.12);color:#1F2A44}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:45;display:none;max-width:90%}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+@media (max-width:420px){.mcFields{grid-template-columns:1fr 1fr}.mcFields .call{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="today" id="today"></p><h1>My work</h1></div>
+    <div><button class="pill" id="installBtn" type="button" hidden>⬇ Install app</button> <button class="pill" id="notifBtn" type="button">Turn on alerts</button><div class="sync" id="sync"></div></div>
+  </header>
+
+  <section class="must" aria-labelledby="mustH">
+    <div class="mustTop"><h2 id="mustH">Today's must-contact</h2><div class="streak" id="streak" title="Last 7 days"></div></div>
+    <div class="mc" data-kind="customer">
+      <div class="mcHead"><button class="tick" type="button" aria-label="Mark customer contacted"></button><strong>1 customer</strong></div>
+      <div class="mcFields">
+        <div class="acWrap"><input class="mName" placeholder="Customer name" autocomplete="off"><div class="acList"></div></div>
+        <input class="mPhone" type="tel" placeholder="Number">
+        <a class="call" href="#" target="_blank" rel="noopener" aria-disabled="true">📞 Call</a>
+      </div>
+    </div>
+    <div class="mc" data-kind="connector">
+      <div class="mcHead"><button class="tick" type="button" aria-label="Mark connector contacted"></button><strong>1 connector</strong></div>
+      <div class="mcFields">
+        <div class="acWrap"><input class="mName" placeholder="Connector name" autocomplete="off"><div class="acList"></div></div>
+        <input class="mPhone" type="tel" placeholder="Number">
+        <a class="call" href="#" target="_blank" rel="noopener" aria-disabled="true">📞 Call</a>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="Jobs">Jobs</button>
+    <button role="tab" aria-selected="false" data-tab="Cal">Calendar</button>
+    <button role="tab" aria-selected="false" data-tab="Contacts">Contacts</button>
+  </nav>
+
+  <div class="panel" id="panelJobs">
+    <div class="chips" id="chips"></div>
+    <div id="jobLists"></div>
+  </div>
+
+  <div class="panel" id="panelCal" hidden>
+    <div class="calHead"><button class="pill" id="prevM" type="button" aria-label="Previous month">‹</button><h2 id="monthTitle"></h2><button class="pill" id="nextM" type="button" aria-label="Next month">›</button></div>
+    <div class="calGrid" id="calGrid"></div>
+    <div class="dayList"><h3 id="dayTitle"></h3><ul id="dayJobs"></ul></div>
+  </div>
+
+  <div class="panel" id="panelContacts" hidden>
+    <div class="cBtns">
+      <button type="button" id="pickPhone">Pick from phone</button>
+      <label class="btn" for="importFile">Import Google file</label>
+      <input id="importFile" type="file" accept=".csv,.vcf,text/csv,text/vcard,text/x-vcard" hidden>
+    </div>
+    <p class="help" id="contactHelp">To bring in your Google or phone contacts: open contacts.google.com → Export → choose “Google CSV” or “vCard”, then tap “Import Google file”. Names you import show up as suggestions whenever you type a name.</p>
+    <div class="cBtns" style="margin-bottom:6px"><button type="button" id="backupBtn">Back up my data</button><label class="btn" for="restoreFile">Restore backup</label><input id="restoreFile" type="file" accept=".json,application/json" hidden></div>
+    <p class="help">Your data is stored only on this phone. Back it up now and then, and keep the file in Google Drive.</p>
+    <div class="row2" style="margin-bottom:10px"><input id="cSearch" placeholder="Search contacts"><button class="pill" id="addContact" type="button">+ Add contact</button></div>
+    <ul id="contactList"></ul>
+  </div>
+</main>
+
+<button class="fab" id="fab" type="button">+ Add job</button>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="jobSheet" role="dialog" aria-modal="true" aria-labelledby="jobSheetT">
+  <h2 id="jobSheetT">New job</h2>
+  <label class="f" for="jTitle">Job</label>
+  <input id="jTitle" placeholder="e.g. Collect ITR for Sharma file" autocomplete="off">
+  <label class="f" for="jCat">Category</label>
+  <select id="jCat"></select>
+  <label class="f" for="jName">Person (optional)</label>
+  <div class="row2">
+    <div class="acWrap"><input id="jName" placeholder="Start typing a name" autocomplete="off"><div class="acList"></div></div>
+    <input id="jPhone" type="tel" placeholder="Number">
+  </div>
+  <label class="f">Due date and time <span id="dueReq" style="font-weight:400;color:var(--muted)">(optional)</span></label>
+  <div class="row2"><input id="jDate" type="date" aria-label="Due date"><input id="jTime" type="time" aria-label="Due time"></div>
+  <div class="quick">
+    <button type="button" data-q="60">In 1 hour</button>
+    <button type="button" data-q="tonight">Today 6 PM</button>
+    <button type="button" data-q="tomorrow">Tomorrow 10 AM</button>
+    <button type="button" data-q="clear">No date</button>
+  </div>
+  <p class="hint">Jobs with a date show on the calendar and ring when due.</p>
+  <label class="f" for="jRepeat">Repeat</label>
+  <select id="jRepeat"><option value="none">Never</option><option value="daily">Every day</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select>
+  <label class="f" for="jNote">Note</label>
+  <textarea id="jNote" placeholder="Details, file number, amount…"></textarea>
+  <button class="save" id="jSave" type="button">Save job</button>
+</div>
+
+<div class="sheet" id="cSheet" role="dialog" aria-modal="true" aria-labelledby="cSheetT">
+  <h2 id="cSheetT">Add contact</h2>
+  <label class="f" for="cName">Name</label><input id="cName" autocomplete="off">
+  <label class="f" for="cPhone">Number</label><input id="cPhone" type="tel">
+  <button class="save" id="cSave" type="button">Save contact</button>
+</div>
+
+<div class="alert" id="alert" role="alertdialog" aria-live="assertive">
+  <p class="at" id="aTitle"></p><p id="aNote"></p>
+  <div class="btns"><button type="button" class="alt" id="aSnooze">Snooze 10 min</button><button type="button" id="aDone">Mark done</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+var CATS=[
+ {id:'followup',name:'Follow up',c:'#2F7F7A'},
+ {id:'login',name:'Login',c:'#3B6FB6'},
+ {id:'discrepancy',name:'Solve discrepancy',c:'#C8453B'},
+ {id:'disbursal',name:'Disbursal',c:'#2E8B57'},
+ {id:'payout',name:'Payout',c:'#8A5CC2'},
+ {id:'vendor',name:'Vendor payment',c:'#B7791F'},
+ {id:'connector',name:'Connector relationship',c:'#0E8C9E'},
+ {id:'impcust',name:'Important customer',c:'#D1497A'},
+ {id:'admin',name:'Administrative',c:'#6B7890'},
+ {id:'timebound',name:'Time-bound reminder',c:'#E0A21B'}
+];
+var catById={};CATS.forEach(function(c){catById[c.id]=c;});
+var LKEY='workplanner-v1',CKEY='workplanner-contacts-v1';
+var S={jobs:[],daily:{},updatedAt:0};
+var contacts=[];
+var filter='all',calMonth=new Date(),selDay=null,editingId=null,ringingId=null;
+var $=function(id){return document.getElementById(id);};
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+function pad(n){return String(n).padStart(2,'0');}
+function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function tInput(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
+function sameDay(a,b){return dkey(a)===dkey(b);}
+function fmtT(d){return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+function fmtWhen(ts){var d=new Date(ts),n=new Date(),t=new Date();t.setDate(n.getDate()+1);
+ if(sameDay(d,n))return 'Today, '+fmtT(d); if(sameDay(d,t))return 'Tomorrow, '+fmtT(d);
+ return d.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'})+', '+fmtT(d);}
+function telHref(p){return 'tel:'+String(p||'').replace(/[^\d+]/g,'');}
+function uid(){return 'j'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display='none';},2200);}
+
+/* ---------- storage ---------- */
+function loadLocal(){
+ try{var r=localStorage.getItem(LKEY);if(r){var o=JSON.parse(r);if(o&&Array.isArray(o.jobs))S=o;}}catch(e){}
+ try{var c=localStorage.getItem(CKEY);if(c){var a=JSON.parse(c);if(Array.isArray(a))contacts=a;}}catch(e){}
+ if(!S.daily)S.daily={};
+}
+var dbRef=null,writing=Promise.resolve(),pending=null;
+function save(){
+ S.updatedAt=Date.now();
+ try{localStorage.setItem(LKEY,JSON.stringify(S));}catch(e){}
+ if(dbRef){clearTimeout(pending);pending=setTimeout(pushRemote,700);}
+}
+function pushRemote(){
+ var body=JSON.parse(JSON.stringify(S));
+ writing=writing.then(function(){return dbRef.set(body);}).then(function(){setSync('Synced');}).catch(function(e){setSync('Saved on this device');});
+}
+function saveContacts(){try{localStorage.setItem(CKEY,JSON.stringify(contacts));}catch(e){}}
+function setSync(t){$('sync').textContent=t;}
+async function connectDb(){
+ try{
+  if(!window.claude||!window.claude.use)return;
+  var db=await window.claude.use('db'),user=await window.claude.use('user');
+  if(!db||!user)return;
+  var id=await user.id(); if(!id)return;
+  dbRef=db.doc('data/users/'+id+'/state');
+  await pullRemote(true);
+ }catch(e){dbRef=null;}
+}
+async function pullRemote(first){
+ if(!dbRef)return;
+ try{
+  var snap=await dbRef.get();
+  if(snap.exists){var r=snap.data();
+   if(r&&Array.isArray(r.jobs)&&(r.updatedAt||0)>(S.updatedAt||0)){S=JSON.parse(JSON.stringify(r));if(!S.daily)S.daily={};try{localStorage.setItem(LKEY,JSON.stringify(S));}catch(e){}renderAll();}
+   else if((S.updatedAt||0)>(r.updatedAt||0))pushRemote();
+  } else if(first&&(S.jobs.length||Object.keys(S.daily).length)) pushRemote();
+  setSync('Synced');
+ }catch(e){setSync('Saved on this device');}
+}
+
+/* ---------- autocomplete ---------- */
+function allPeople(){
+ var map={};contacts.forEach(function(c){map[c.name.toLowerCase()+'|'+c.phone]=c;});
+ S.jobs.forEach(function(j){if(j.person&&j.person.name){var k=j.person.name.toLowerCase()+'|'+(j.person.phone||'');if(!map[k])map[k]={name:j.person.name,phone:j.person.phone||''};}});
+ return Object.keys(map).map(function(k){return map[k];});
+}
+function attachAC(input,onPick){
+ var list=input.parentNode.querySelector('.acList');
+ function show(){
+  var q=input.value.trim().toLowerCase();
+  if(!q){list.style.display='none';return;}
+  var ppl=allPeople(),starts=[],has=[];
+  ppl.forEach(function(p){var n=p.name.toLowerCase();if(n.indexOf(q)===0||n.split(/\s+/).some(function(w){return w.indexOf(q)===0;}))starts.push(p);else if(n.indexOf(q)>-1||(p.phone||'').replace(/\D/g,'').indexOf(q.replace(/\D/g,'')||'#')>-1)has.push(p);});
+  var res=starts.concat(has).slice(0,8);
+  if(!res.length){list.innerHTML=contacts.length?'':'<button type="button" disabled><small>No contacts yet. Import them from the Contacts tab.</small></button>';list.style.display=contacts.length?'none':'block';return;}
+  list.innerHTML=res.map(function(p,i){return '<button type="button" data-i="'+i+'">'+esc(p.name)+'<small>'+esc(p.phone||'No number')+'</small></button>';}).join('');
+  list.style.display='block';
+  Array.prototype.forEach.call(list.querySelectorAll('button[data-i]'),function(b){
+   b.addEventListener('mousedown',function(e){e.preventDefault();});
+   b.addEventListener('click',function(){var p=res[+b.dataset.i];input.value=p.name;list.style.display='none';onPick(p);});
+  });
+ }
+ input.addEventListener('input',show);
+ input.addEventListener('focus',show);
+ input.addEventListener('blur',function(){setTimeout(function(){list.style.display='none';},150);});
+}
+
+/* ---------- daily must-contact ---------- */
+function todayRec(){var k=dkey(new Date());if(!S.daily[k])S.daily[k]={customer:{name:'',phone:'',done:false},connector:{name:'',phone:'',done:false}};return S.daily[k];}
+function renderMust(){
+ var rec=S.daily[dkey(new Date())]||{customer:{},connector:{}};
+ Array.prototype.forEach.call(document.querySelectorAll('.mc'),function(card){
+  var k=card.dataset.kind,r=rec[k]||{};
+  var nm=card.querySelector('.mName'),ph=card.querySelector('.mPhone'),call=card.querySelector('.call');
+  if(document.activeElement!==nm)nm.value=r.name||'';
+  if(document.activeElement!==ph)ph.value=r.phone||'';
+  card.classList.toggle('ok',!!r.done);
+  card.querySelector('.tick').textContent=r.done?'✓':'';
+  updCall(call,r.phone);
+ });
+ var st=$('streak'),h='';
+ for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var x=S.daily[dkey(d)];var n=x?((x.customer&&x.customer.done?1:0)+(x.connector&&x.connector.done?1:0)):0;
+  h+='<span class="'+(n===2?'full':n===1?'half':'')+'" title="'+d.toLocaleDateString([],{weekday:'short',day:'numeric'})+': '+n+' of 2"></span>';}
+ st.innerHTML=h;
+}
+function updCall(a,phone){if(phone){a.href=telHref(phone);a.setAttribute('aria-disabled','false');}else{a.href='#';a.setAttribute('aria-disabled','true');}}
+Array.prototype.forEach.call(document.querySelectorAll('.mc'),function(card){
+ var k=card.dataset.kind,nm=card.querySelector('.mName'),ph=card.querySelector('.mPhone');
+ attachAC(nm,function(p){var r=todayRec()[k];r.name=p.name;r.phone=p.phone||'';save();renderMust();});
+ nm.addEventListener('change',function(){todayRec()[k].name=nm.value.trim();save();renderMust();});
+ ph.addEventListener('input',function(){todayRec()[k].phone=ph.value.trim();updCall(card.querySelector('.call'),ph.value.trim());});
+ ph.addEventListener('change',function(){save();});
+ card.querySelector('.tick').addEventListener('click',function(){
+  var r=todayRec()[k];r.name=nm.value.trim();r.phone=ph.value.trim();
+  if(!r.done&&!r.name){nm.focus();toast('Add the '+k+"'s name first");return;}
+  r.done=!r.done;save();renderMust();if(r.done)toast(k==='customer'?'Customer contact logged':'Connector contact logged');
+ });
+});
+
+/* ---------- jobs ---------- */
+function sortedJobs(cat){return S.jobs.filter(function(j){return j.cat===cat;}).sort(function(a,b){return (a.done-b.done)||(a.order-b.order);});}
+function renderChips(){
+ var open=function(c){return S.jobs.filter(function(j){return !j.done&&(c==='all'||j.cat===c);}).length;};
+ var h='<button class="chip" data-f="all" aria-pressed="'+(filter==='all')+'">All <b>'+open('all')+'</b></button>';
+ CATS.forEach(function(c){h+='<button class="chip" data-f="'+c.id+'" aria-pressed="'+(filter===c.id)+'"><i style="background:'+c.c+'"></i>'+esc(c.name)+' <b>'+(open(c.id)||'')+'</b></button>';});
+ $('chips').innerHTML=h;
+}
+$('chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;filter=b.dataset.f;renderJobs();});
+function jobHTML(j,showCat){
+ var c=catById[j.cat]||CATS[0],now=Date.now();
+ var over=!j.done&&j.due&&j.due<=now;
+ var meta=[];if(j.due)meta.push((over?'Overdue · ':'')+fmtWhen(j.due));if(j.repeat&&j.repeat!=='none')meta.push({daily:'Every day',weekly:'Every week',monthly:'Every month'}[j.repeat]);
+ var person='';
+ if(j.person&&j.person.name){person='<div class="jc">👤 '+esc(j.person.name)+(j.person.phone?' <a href="'+telHref(j.person.phone)+'" target="_blank" rel="noopener">📞 '+esc(j.person.phone)+'</a>':'')+'</div>';}
+ return '<li class="job'+(j.done?' done':'')+(over?' overdue':'')+'" data-id="'+j.id+'" style="--c:'+c.c+'">'+
+  '<span class="handle" aria-label="Drag to reorder" title="Drag to reorder">⋮⋮</span>'+
+  '<button class="chk" type="button" data-act="toggle" aria-label="'+(j.done?'Mark not done':'Mark done')+'">'+(j.done?'✓':'')+'</button>'+
+  '<div class="jb"><p class="jt">'+esc(j.title)+'</p>'+
+  (showCat?'<span class="tag">'+esc(c.name)+'</span>':'')+
+  (meta.length?'<p class="jm">'+esc(meta.join(' · '))+'</p>':'')+
+  person+(j.note?'<p class="jn">'+esc(j.note)+'</p>':'')+'</div>'+
+  '<div class="ja">'+(!j.done?'<button class="mini" type="button" data-act="edit">Edit</button>':'')+'<button class="mini del" type="button" data-act="delete">Delete</button></div></li>';
+}
+function renderJobs(){
+ renderChips();
+ var cats=filter==='all'?CATS:[catById[filter]],h='',any=false;
+ cats.forEach(function(c){
+  var js=sortedJobs(c.id);
+  if(filter==='all'&&!js.length)return;any=true;
+  var open=js.filter(function(j){return !j.done;}).length;
+  h+='<div class="cat"><div class="catHead"><h3><i style="background:'+c.c+'"></i>'+esc(c.name)+' <small>'+open+' open</small></h3><button class="addIn" type="button" data-add="'+c.id+'">+ Add</button></div>'+
+   (js.length?'<ul data-cat="'+c.id+'">'+js.map(function(j){return jobHTML(j,false);}).join('')+'</ul>':'<p class="empty">No jobs here yet.</p>')+'</div>';
+ });
+ if(!any)h='<p class="empty" style="margin-top:14px">No jobs yet. Tap “+ Add job” to create your first one, or pick a category above.</p>';
+ $('jobLists').innerHTML=h;
+}
+document.addEventListener('click',function(e){
+ var a=e.target.closest('[data-add]');if(a){openJob(null,{cat:a.dataset.add});return;}
+ var b=e.target.closest('[data-act]');if(!b)return;
+ var li=b.closest('li.job');if(!li)return;
+ var j=S.jobs.find(function(x){return x.id===li.dataset.id;});if(!j)return;
+ if(b.dataset.act==='toggle')complete(j,!j.done);
+ else if(b.dataset.act==='edit')openJob(j);
+ else if(b.dataset.act==='delete'){if(confirm('Delete “'+j.title+'”?')){S.jobs=S.jobs.filter(function(x){return x!==j;});save();renderAll();toast('Job deleted');}}
+});
+function nextOcc(ts,rep){var d=new Date(ts);if(rep==='daily')d.setDate(d.getDate()+1);else if(rep==='weekly')d.setDate(d.getDate()+7);else if(rep==='monthly')d.setMonth(d.getMonth()+1);return d.getTime();}
+function complete(j,val){
+ if(val&&j.due&&j.repeat&&j.repeat!=='none'){var n=j.due;do{n=nextOcc(n,j.repeat);}while(n<=Date.now());j.due=n;j.fired=false;toast('Done. Next one set for '+fmtWhen(n));}
+ else{j.done=val;if(!val)j.fired=j.due?j.due<=Date.now():false;}
+ save();renderAll();
+}
+
+/* drag to reorder */
+var drag=null;
+document.addEventListener('pointerdown',function(e){
+ var h=e.target.closest('.handle');if(!h)return;
+ var li=h.closest('li.job'),ul=li.parentNode;if(!ul||!ul.dataset.cat)return;
+ e.preventDefault();
+ drag={li:li,ul:ul,startY:e.clientY,pid:e.pointerId};
+ li.classList.add('dragging');
+ try{h.setPointerCapture(e.pointerId);}catch(x){}
+});
+document.addEventListener('pointermove',function(e){
+ if(!drag||e.pointerId!==drag.pid)return;
+ e.preventDefault();
+ var items=Array.prototype.filter.call(drag.ul.children,function(x){return x!==drag.li;});
+ var target=null;
+ for(var i=0;i<items.length;i++){var r=items[i].getBoundingClientRect();if(e.clientY<r.top+r.height/2){target=items[i];break;}}
+ if(target){if(drag.li.nextSibling!==target)drag.ul.insertBefore(drag.li,target);}
+ else if(drag.ul.lastElementChild!==drag.li)drag.ul.appendChild(drag.li);
+ if(e.clientY<60)window.scrollBy(0,-10);else if(e.clientY>window.innerHeight-60)window.scrollBy(0,10);
+},{passive:false});
+function endDrag(){
+ if(!drag)return;
+ drag.li.classList.remove('dragging');
+ Array.prototype.forEach.call(drag.ul.children,function(li,i){var j=S.jobs.find(function(x){return x.id===li.dataset.id;});if(j)j.order=i;});
+ drag=null;save();renderAll();
+}
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('pointercancel',endDrag);
+
+/* ---------- job sheet ---------- */
+(function(){var s=$('jCat');CATS.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.name;s.appendChild(o);});})();
+function updDueReq(){$('dueReq').textContent=$('jCat').value==='timebound'?'(required)':'(optional)';}
+$('jCat').addEventListener('change',function(){updDueReq();if($('jCat').value==='timebound'&&!$('jDate').value){var d=new Date(Date.now()+3600000);d.setMinutes(0);$('jDate').value=dkey(d);$('jTime').value=tInput(d);}});
+attachAC($('jName'),function(p){$('jPhone').value=p.phone||'';});
+function openSheet(id){$('scrim').style.display='block';$(id).classList.add('open');}
+function closeSheets(){$('scrim').style.display='none';$('jobSheet').classList.remove('open');$('cSheet').classList.remove('open');}
+$('scrim').addEventListener('click',closeSheets);
+function openJob(j,pre){
+ pre=pre||{};editingId=j?j.id:null;
+ $('jobSheetT').textContent=j?'Edit job':'New job';$('jSave').textContent=j?'Save changes':'Save job';
+ $('jTitle').value=j?j.title:'';
+ $('jCat').value=j?j.cat:(pre.cat||(filter!=='all'?filter:'followup'));
+ $('jName').value=j&&j.person?j.person.name:'';$('jPhone').value=j&&j.person?j.person.phone:'';
+ var due=j?j.due:pre.due;
+ if(due){var d=new Date(due);$('jDate').value=dkey(d);$('jTime').value=tInput(d);}else{$('jDate').value='';$('jTime').value='';}
+ if(!j&&$('jCat').value==='timebound'&&!due){var t=new Date(Date.now()+3600000);t.setMinutes(0);$('jDate').value=dkey(t);$('jTime').value=tInput(t);}
+ $('jRepeat').value=j?(j.repeat||'none'):'none';$('jNote').value=j?(j.note||''):'';
+ updDueReq();openSheet('jobSheet');setTimeout(function(){$('jTitle').focus();},60);
+}
+$('fab').addEventListener('click',function(){openJob(null,selDay&&!$('panelCal').hidden?{due:new Date(selDay+'T10:00').getTime()}:{});});
+Array.prototype.forEach.call(document.querySelectorAll('#jobSheet .quick button'),function(b){b.addEventListener('click',function(){
+ var q=b.dataset.q,d=new Date();
+ if(q==='clear'){$('jDate').value='';$('jTime').value='';return;}
+ if(q==='tonight'){d.setHours(18,0,0,0);if(d<=new Date())d.setDate(d.getDate()+1);}
+ else if(q==='tomorrow'){d.setDate(d.getDate()+1);d.setHours(10,0,0,0);}
+ else d=new Date(Date.now()+60*60000);
+ $('jDate').value=dkey(d);$('jTime').value=tInput(d);
+});});
+$('jSave').addEventListener('click',function(){
+ var title=$('jTitle').value.trim();if(!title){$('jTitle').focus();toast('Write what the job is');return;}
+ var cat=$('jCat').value,due=null;
+ if($('jDate').value){var p=$('jDate').value.split('-'),t=($('jTime').value||'10:00').split(':');due=new Date(+p[0],+p[1]-1,+p[2],+t[0],+t[1]).getTime();}
+ if(cat==='timebound'&&!due){toast('Time-bound reminders need a date and time');$('jDate').focus();return;}
+ var nm=$('jName').value.trim(),ph=$('jPhone').value.trim();
+ var data={title:title,cat:cat,due:due,repeat:due?$('jRepeat').value:'none',note:$('jNote').value.trim(),person:nm?{name:nm,phone:ph}:null};
+ if(nm&&ph&&!contacts.some(function(c){return c.name.toLowerCase()===nm.toLowerCase()&&c.phone===ph;})){contacts.push({name:nm,phone:ph});saveContacts();}
+ if(editingId){var j=S.jobs.find(function(x){return x.id===editingId;});if(j.cat!==cat)data.order=-1;if(j.due!==due)data.fired=due?due<=Date.now():false;Object.assign(j,data);}
+ else{data.id=uid();data.done=false;data.order=-1;data.fired=due?due<=Date.now():false;data.createdAt=Date.now();S.jobs.push(data);}
+ sortedJobs(cat).forEach(function(x,i){x.order=i;});
+ save();closeSheets();renderAll();toast(editingId?'Changes saved':'Job saved');
+});
+
+/* ---------- calendar ---------- */
+function gcalLink(j){
+ var s=new Date(j.due),e=new Date(j.due+30*60000);
+ function f(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';}
+ var det=[(catById[j.cat]||{}).name,j.person&&j.person.name?(j.person.name+(j.person.phone?' '+j.person.phone:'')):'',j.note||''].filter(Boolean).join('\n');
+ return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(j.title)+'&dates='+f(s)+'/'+f(e)+'&details='+encodeURIComponent(det);
+}
+function renderCal(){
+ var y=calMonth.getFullYear(),m=calMonth.getMonth();
+ $('monthTitle').textContent=calMonth.toLocaleDateString([],{month:'long',year:'numeric'});
+ var first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),todayK=dkey(new Date());
+ if(!selDay)selDay=todayK;
+ var byDay={};S.jobs.forEach(function(j){if(j.due){var k=dkey(new Date(j.due));(byDay[k]=byDay[k]||[]).push(j);}});
+ var h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){return '<div class="dow">'+d+'</div>';}).join('');
+ for(var i=0;i<42;i++){var d=new Date(start);d.setDate(start.getDate()+i);var k=dkey(d),js=byDay[k]||[];
+  h+='<button type="button" class="day'+(d.getMonth()!==m?' other':'')+(k===todayK?' isToday':'')+'" data-day="'+k+'" aria-pressed="'+(k===selDay)+'" aria-label="'+d.toDateString()+', '+js.length+' jobs">'+d.getDate()+
+   '<span class="dots">'+js.slice(0,4).map(function(j){return '<i style="background:'+(j.done?'var(--line)':(catById[j.cat]||CATS[0]).c)+'"></i>';}).join('')+'</span></button>';}
+ $('calGrid').innerHTML=h;
+ var sd=new Date(selDay+'T00:00');
+ $('dayTitle').textContent=sd.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'});
+ var list=(byDay[selDay]||[]).sort(function(a,b){return a.due-b.due;});
+ $('dayJobs').innerHTML=list.length?list.map(function(j){return jobHTML(j,true).replace('</div><div class="ja">','<a class="gcal" href="'+gcalLink(j)+'" target="_blank" rel="noopener">Add to Google Calendar</a></div><div class="ja">');}).join(''):'<li class="empty">Nothing due. Tap “+ Add job” to add one on this day.</li>';
+}
+$('calGrid').addEventListener('click',function(e){var b=e.target.closest('.day');if(!b)return;selDay=b.dataset.day;var d=new Date(selDay+'T00:00');if(d.getMonth()!==calMonth.getMonth())calMonth=new Date(d.getFullYear(),d.getMonth(),1);renderCal();});
+$('prevM').addEventListener('click',function(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCal();});
+$('nextM').addEventListener('click',function(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCal();});
+
+/* ---------- contacts ---------- */
+function renderContacts(){
+ var q=$('cSearch').value.trim().toLowerCase();
+ var arr=contacts.filter(function(c){return !q||c.name.toLowerCase().indexOf(q)>-1||(c.phone||'').indexOf(q)>-1;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+ var shown=arr.slice(0,200);
+ $('contactList').innerHTML=shown.length?shown.map(function(c){var i=contacts.indexOf(c);return '<li class="crow"><div><p class="n">'+esc(c.name)+'</p><p class="p">'+esc(c.phone||'No number')+'</p></div>'+(c.phone?'<a class="call" href="'+telHref(c.phone)+'" target="_blank" rel="noopener">📞</a>':'')+'<button class="mini del" type="button" data-cdel="'+i+'" aria-label="Remove contact">✕</button></li>';}).join('')+(arr.length>200?'<li class="empty">'+(arr.length-200)+' more. Search to narrow down.</li>':''):'<li class="empty">'+(contacts.length?'No match.':'No contacts yet. Import your Google contacts file or pick from your phone.')+'</li>';
+}
+$('cSearch').addEventListener('input',renderContacts);
+$('contactList').addEventListener('click',function(e){var b=e.target.closest('[data-cdel]');if(!b)return;contacts.splice(+b.dataset.cdel,1);saveContacts();renderContacts();});
+$('addContact').addEventListener('click',function(){$('cName').value='';$('cPhone').value='';openSheet('cSheet');setTimeout(function(){$('cName').focus();},60);});
+$('cSave').addEventListener('click',function(){var n=$('cName').value.trim(),p=$('cPhone').value.trim();if(!n){$('cName').focus();return;}contacts.push({name:n,phone:p});saveContacts();closeSheets();renderContacts();toast('Contact saved');});
+function mergeContacts(list){
+ var seen={},added=0;contacts.forEach(function(c){seen[c.name.toLowerCase()+'|'+c.phone]=1;});
+ list.forEach(function(c){if(!c.name)return;var k=c.name.toLowerCase()+'|'+c.phone;if(!seen[k]){seen[k]=1;contacts.push(c);added++;}});
+ saveContacts();renderContacts();return added;
+}
+var picker=('contacts' in navigator)&&('select' in navigator.contacts);
+$('pickPhone').addEventListener('click',async function(){
+ if(!picker){toast('This phone browser does not allow picking contacts here. Use “Import Google file”.');return;}
+ try{var res=await navigator.contacts.select(['name','tel'],{multiple:true});
+  var list=[];res.forEach(function(r){var n=(r.name&&r.name[0])||'';(r.tel&&r.tel.length?r.tel:['']).slice(0,1).forEach(function(t){list.push({name:n,phone:String(t).trim()});});});
+  toast(mergeContacts(list)+' contacts added');
+ }catch(e){toast('Could not open your phone contacts here. Use “Import Google file”.');}
+});
+function parseCSVLine(text){
+ var rows=[],row=[],cur='',q=false;
+ for(var i=0;i<text.length;i++){var ch=text[i];
+  if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+  else if(ch==='"')q=true;else if(ch===','){row.push(cur);cur='';}
+  else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}
+  else cur+=ch;}
+ if(cur||row.length){row.push(cur);rows.push(row);}
+ return rows;
+}
+function fromCSV(text){
+ var rows=parseCSVLine(text.replace(/^\uFEFF/,''));if(rows.length<2)return [];
+ var H=rows[0].map(function(h){return h.trim().toLowerCase();});
+ var idx=function(re){for(var i=0;i<H.length;i++)if(re.test(H[i]))return i;return -1;};
+ var iName=idx(/^name$/),iFirst=idx(/^(first name|given name)$/),iMid=idx(/^(middle name|additional name)$/),iLast=idx(/^(last name|family name)$/);
+ var phoneCols=[];H.forEach(function(h,i){if(/phone.*value|^phone$|mobile|^phone number/.test(h))phoneCols.push(i);});
+ var out=[];
+ rows.slice(1).forEach(function(r){
+  var n=iName>-1?r[iName]:'';
+  if(!n)n=[iFirst,iMid,iLast].map(function(i){return i>-1?r[i]:'';}).filter(Boolean).join(' ');
+  var ph='';for(var k=0;k<phoneCols.length&&!ph;k++)ph=(r[phoneCols[k]]||'').split(':::')[0].trim();
+  n=(n||'').trim();if(n)out.push({name:n,phone:ph});
+ });
+ return out;
+}
+function fromVCF(text){
+ text=text.replace(/\r\n[ \t]/g,'').replace(/\n[ \t]/g,'');
+ var out=[];text.split(/BEGIN:VCARD/i).slice(1).forEach(function(card){
+  var fn=(card.match(/^FN[^:\n]*:(.*)$/mi)||[])[1]||'';
+  if(!fn){var n=(card.match(/^N[;:][^\n]*$/mi)||[''])[0];var parts=n.replace(/^N[^:]*:/i,'').split(';');fn=[parts[1],parts[0]].filter(Boolean).join(' ');}
+  var tel=(card.match(/^TEL[^:\n]*:(.*)$/mi)||[])[1]||'';
+  fn=fn.replace(/\\,/g,',').trim();if(fn)out.push({name:fn,phone:tel.trim()});
+ });return out;
+}
+$('importFile').addEventListener('change',function(){
+ var f=this.files&&this.files[0];if(!f)return;
+ var r=new FileReader();r.onload=function(){var t=String(r.result||'');var list=/BEGIN:VCARD/i.test(t)?fromVCF(t):fromCSV(t);
+  toast(list.length?mergeContacts(list)+' contacts imported':'No contacts found in that file');};
+ r.readAsText(f);this.value='';
+});
+
+/* ---------- tabs ---------- */
+Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){b.addEventListener('click',function(){
+ Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){x.setAttribute('aria-selected',String(x===b));});
+ ['Jobs','Cal','Contacts'].forEach(function(t){$('panel'+t).hidden=t!==b.dataset.tab;});
+ $('fab').style.display=b.dataset.tab==='Contacts'?'none':'';
+ renderAll();
+});});
+
+/* ---------- alerts ---------- */
+function beep(){try{var ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(function(o){var os=ctx.createOscillator(),g=ctx.createGain();os.frequency.value=880;os.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.0001,ctx.currentTime+o);g.gain.exponentialRampToValueAtTime(.3,ctx.currentTime+o+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+o+.25);os.start(ctx.currentTime+o);os.stop(ctx.currentTime+o+.3);});}catch(e){}}
+function ring(j){ringingId=j.id;$('aTitle').textContent=j.title;$('aNote').textContent=[(catById[j.cat]||{}).name,j.person&&j.person.name].filter(Boolean).join(' · ');$('alert').style.display='block';beep();
+ try{if(navigator.vibrate)navigator.vibrate([300,150,300]);}catch(e){}
+ try{if('Notification' in window&&Notification.permission==='granted')new Notification('Job due',{body:j.title});}catch(e){}}
+function closeAlert(){$('alert').style.display='none';ringingId=null;}
+$('aSnooze').addEventListener('click',function(){var j=S.jobs.find(function(x){return x.id===ringingId;});if(j){j.due=Date.now()+600000;j.fired=false;save();renderAll();}closeAlert();});
+$('aDone').addEventListener('click',function(){var j=S.jobs.find(function(x){return x.id===ringingId;});if(j)complete(j,true);closeAlert();});
+function tick(){if(!ringingId){var now=Date.now(),j=S.jobs.find(function(x){return !x.done&&x.due&&!x.fired&&x.due<=now;});if(j){j.fired=true;save();ring(j);}}
+ if(!drag&&!document.querySelector('.sheet.open')&&document.activeElement.tagName!=='INPUT')renderAll();}
+function updNotif(){var b=$('notifBtn');if(!('Notification' in window)){b.textContent='Sound alerts on';return;}
+ if(Notification.permission==='granted'){b.textContent='Alerts on';b.disabled=true;}else if(Notification.permission==='denied'){b.textContent='Sound alerts on';b.disabled=true;}}
+$('notifBtn').addEventListener('click',function(){beep();toast('Alerts ring while this page is open');if('Notification' in window&&Notification.permission==='default'){try{Notification.requestPermission().then(updNotif,updNotif);}catch(e){updNotif();}}});
+
+
+/* ---------- backup / restore ---------- */
+$('backupBtn').addEventListener('click',function(){
+ var data=JSON.stringify({app:'workplanner',version:1,state:S,contacts:contacts},null,1);
+ var blob=new Blob([data],{type:'application/json'});var a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='work-planner-backup-'+dkey(new Date())+'.json';document.body.appendChild(a);a.click();
+ setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);toast('Backup file saved to Downloads');
+});
+$('restoreFile').addEventListener('change',function(){
+ var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();
+ r.onload=function(){try{var o=JSON.parse(r.result);if(!o||!o.state||!Array.isArray(o.state.jobs))throw 0;
+  if(!confirm('Replace everything in the app with this backup?'))return;
+  S=o.state;if(!S.daily)S.daily={};contacts=Array.isArray(o.contacts)?o.contacts:contacts;save();saveContacts();renderAll();toast('Backup restored');
+ }catch(e){toast('That file is not a Work Planner backup');}};
+ r.readAsText(f);this.value='';
+});
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+
+var deferredInstall=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredInstall=e;$('installBtn').hidden=false;});
+$('installBtn').addEventListener('click',async function(){if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice;}catch(e){}deferredInstall=null;$('installBtn').hidden=true;});
+window.addEventListener('appinstalled',function(){$('installBtn').hidden=true;toast('App installed');});
+function renderAll(){
+ $('today').textContent=new Date().toLocaleDateString([],{weekday:'long',day:'numeric',month:'long'});
+ renderMust();
+ if(!$('panelJobs').hidden)renderJobs();
+ if(!$('panelCal').hidden)renderCal();
+ if(!$('panelContacts').hidden)renderContacts();
+}
+loadLocal();updNotif();renderAll();setSync('Saved on this device');
+connectDb();
+setInterval(tick,15000);setTimeout(tick,600);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){pullRemote(false);tick();}});
+})();
+</script>
+</body>
+</html>
